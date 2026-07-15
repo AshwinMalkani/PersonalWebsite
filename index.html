@@ -276,19 +276,21 @@
       color: #86868b;
     }
 
-    /* ---------- Scroll reveal ---------- */
-    .reveal {
+    /* ---------- Scroll reveal ----------
+       Hidden state only applies once JS has stamped .js on <html>,
+       so content is never invisible if scripts don't run. */
+    .js .reveal {
       opacity: 0;
       transform: translateY(28px);
       transition: opacity 0.7s cubic-bezier(0.25, 0.1, 0.25, 1),
                   transform 0.7s cubic-bezier(0.25, 0.1, 0.25, 1);
     }
-    .reveal.in-view {
+    .js .reveal.in-view {
       opacity: 1;
       transform: none;
     }
     @media (prefers-reduced-motion: reduce) {
-      .reveal { opacity: 1; transform: none; transition: none; }
+      .js .reveal { opacity: 1; transform: none; transition: none; }
     }
 
     /* ---------- Project screenshots ---------- */
@@ -333,34 +335,117 @@
       font-family: inherit;
     }
     .tile-light .shot .details-chip { background: rgba(0, 0, 0, 0.08); color: var(--text); }
-    .shot img {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
+    /* The details panel defines the box height so it always hugs its text.
+       Clicking the frame (or its Preview chip) opens the full screenshot
+       in a modal. */
+    .shot[data-shot] { cursor: pointer; transition: transform 0.3s ease; }
+    .shot[data-shot]:hover { transform: translateY(-3px); }
     .shot .overlay {
-      position: absolute;
-      inset: 36px 0 0 0;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: 36px 40px;
-      overflow-y: auto;
-      background: rgba(18, 18, 20, 0.82);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      opacity: 0;
-      transition: opacity 0.35s ease;
-      pointer-events: none;
+      gap: 26px;
+      padding: 36px 44px;
+      background: #131316;
     }
-    .shot:hover .overlay,
-    .shot.open .overlay {
+    .shot .overlay li { font-size: 16px; line-height: 1.5; }
+
+    /* ---------- Preview modal ---------- */
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+    }
+    .modal[hidden] { display: none; }
+    .modal .backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .modal.show .backdrop { opacity: 1; }
+    .modal-frame {
+      margin: 0;
+      cursor: default;
+      min-width: 0;
+      max-width: min(1100px, 94vw);
+      background: #131316;
+      box-shadow: 0 40px 120px rgba(0, 0, 0, 0.55);
+      transform-origin: top left;
+      will-change: transform;
+    }
+    .modal-frame img {
+      display: block;
+      max-width: min(1100px, calc(100vw - 56px));
+      max-height: calc(92vh - 36px);
+      width: auto;
+      height: auto;
+      opacity: 0;
+      transition: opacity 0.65s ease;
+    }
+    .modal.img-in .modal-frame img { opacity: 1; }
+    /* Ghost of the tile's details panel, riding inside the expanding frame */
+    .modal-frame .overlay-ghost {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 36px;
+      bottom: 0;
+      z-index: 2;
       opacity: 1;
-      pointer-events: auto;
+      transition: opacity 0.55s ease;
+      overflow: hidden;
+    }
+    .modal.img-in .overlay-ghost { opacity: 0; }
+    .modal-frame .overlay ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px 32px;
+    }
+    .modal-frame .overlay li {
+      font-size: 16px;
+      line-height: 1.5;
+      padding-left: 24px;
+      position: relative;
+      color: #d2d2d7;
+    }
+    .modal-frame .overlay li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .modal-frame .overlay .tag { background: rgba(255, 255, 255, 0.14); color: #f5f5f7; }
+    /* Variant when the source tile is the light one */
+    .modal-frame.from-light { background: #fbfbfd; }
+    .modal-frame.from-light .titlebar { background: #e8e8ed; }
+    .modal-frame.from-light .addr { color: #6e6e73; }
+    .modal-frame.from-light .details-chip { background: rgba(0, 0, 0, 0.08); color: var(--text); }
+    .modal-frame.from-light .overlay { background: #fbfbfd; }
+    .modal-frame.from-light .overlay li { color: #424245; }
+    .modal-frame.from-light .overlay .tag { background: var(--bg-alt); color: var(--text); }
+    @media (prefers-reduced-motion: reduce) {
+      .shot[data-shot], .shot[data-shot]:hover { transform: none; transition: none; }
+      .modal .backdrop, .modal-frame img, .modal-frame .overlay-ghost { transition: none; }
     }
     .shot .overlay ul { margin-top: 0; }
+    .shot .overlay .tags { margin-top: 0; }
     .shot .overlay li { color: #d2d2d7; }
     .shot .overlay .tag { background: rgba(255, 255, 255, 0.14); color: #f5f5f7; }
+    .tile-light .shot .overlay { background: #fbfbfd; }
+    .tile-light .shot .overlay li { color: #424245; }
+    .tile-light .shot .overlay .tag { background: var(--bg-alt); color: var(--text); }
     @media (prefers-reduced-motion: reduce) {
       .shot .overlay { transition: none; }
     }
@@ -372,6 +457,13 @@
       .tile { padding: 40px 28px; }
       .job { grid-template-columns: 1fr; gap: 6px; }
       .nav-links { gap: 18px; }
+      .tile ul, .modal-frame .overlay ul { grid-template-columns: 1fr; }
+      .modal { padding: 16px; }
+      .modal-frame img { max-width: calc(100vw - 32px); }
+    }
+    @media (max-width: 520px) {
+      .nav-name { display: none; }
+      .nav-inner { justify-content: center; }
     }
   </style>
 </head>
@@ -423,13 +515,13 @@
         <div class="tile-links">
           <a href="https://github.com/AshwinMalkani/lightAutomation" target="_blank" rel="noopener">View on GitHub</a>
         </div>
-        <div class="shot">
+        <div class="shot" data-shot="assets/shot-light.png" data-title="Bedroom Lights"
+             data-alt="Light Automation dashboard: sunrise schedule, presets, and lamp controls">
           <div class="titlebar">
             <span class="dot"></span><span class="dot"></span><span class="dot"></span>
             <span class="addr">Bedroom Lights</span>
-            <button class="details-chip" type="button">Details</button>
+            <button class="details-chip" type="button">Preview</button>
           </div>
-          <img src="assets/shot-light.png" alt="Light Automation dashboard: sunrise schedule, presets, and lamp controls" loading="lazy">
           <div class="overlay">
             <ul>
               <li>Sunrise automation with per-minute stepped fades that blend seamlessly</li>
@@ -458,13 +550,13 @@
         <div class="tile-links">
           <span class="muted">Live at rental.ashwinmalkani.dev — private, access-gated</span>
         </div>
-        <div class="shot">
+        <div class="shot" data-shot="assets/shot-rental.png" data-title="Rental Tracker · demo data"
+             data-alt="Rental Tracker dashboard: cash-flow chart, expense breakdown, and unit income split (demo data)">
           <div class="titlebar">
             <span class="dot"></span><span class="dot"></span><span class="dot"></span>
             <span class="addr">Rental Tracker · demo data</span>
-            <button class="details-chip" type="button">Details</button>
+            <button class="details-chip" type="button">Preview</button>
           </div>
-          <img src="assets/shot-rental.png" alt="Rental Tracker dashboard: cash-flow chart, expense breakdown, and unit income split (demo data)" loading="lazy">
           <div class="overlay">
             <ul>
               <li>Monthly cash-flow charts with per-unit income splits</li>
@@ -594,9 +686,22 @@
     <p class="fine-print">© 2026 Ashwin Malkani · ashwinmalkani.dev</p>
   </footer>
 
+  <div class="modal" id="preview-modal" hidden role="dialog" aria-modal="true" aria-label="Project screenshot preview">
+    <div class="backdrop"></div>
+    <figure class="shot modal-frame">
+      <div class="titlebar">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="addr">Preview</span>
+        <button class="details-chip modal-close" type="button">Close ✕</button>
+      </div>
+      <img src="" alt="">
+    </figure>
+  </div>
+
   <script>
     (function () {
       if (!("IntersectionObserver" in window)) return;
+      document.documentElement.classList.add("js");
       var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
           if (entry.isIntersecting) {
@@ -608,14 +713,111 @@
       document.querySelectorAll(".reveal").forEach(function (el) { io.observe(el); });
     })();
 
-    // Screenshot detail overlays: hover shows them on desktop; the Details
-    // chip (or a tap anywhere on the shot) toggles them on touch devices.
+    // Clicking a project frame (or its Preview chip) expands that frame into
+    // a modal: the box FLIP-animates from its tile position to center screen
+    // while the details fade out and the screenshot fades in. Closing plays
+    // it in reverse. Backdrop click, Close, or Esc dismisses.
     (function () {
-      document.querySelectorAll(".shot").forEach(function (shot) {
-        shot.addEventListener("click", function (e) {
-          if (e.target.closest("a")) return;
-          shot.classList.toggle("open");
-        });
+      var modal = document.getElementById("preview-modal");
+      var frame = modal.querySelector(".modal-frame");
+      var img = modal.querySelector("img");
+      var addr = modal.querySelector(".addr");
+      var closeBtn = modal.querySelector(".modal-close");
+      var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+      var activeShot = null;
+      var ghost = null;
+      var busy = false;
+
+      function makeGhost(shot) {
+        removeGhost();
+        ghost = shot.querySelector(".overlay").cloneNode(true);
+        ghost.classList.add("overlay-ghost");
+        frame.appendChild(ghost);
+      }
+      function removeGhost() {
+        if (ghost) { ghost.remove(); ghost = null; }
+      }
+
+      function openModal(shot) {
+        if (busy || !modal.hidden) return;
+        busy = true;
+        activeShot = shot;
+        img.src = shot.getAttribute("data-shot");
+        img.alt = shot.getAttribute("data-alt") || "";
+        addr.textContent = shot.getAttribute("data-title") || "Preview";
+        frame.classList.toggle("from-light", !!shot.closest(".tile-light"));
+        lastFocus = document.activeElement;
+
+        function begin() {
+          document.body.style.overflow = "hidden";
+          if (reduceMotion.matches) {
+            modal.hidden = false;
+            modal.classList.add("show", "img-in");
+            closeBtn.focus();
+            busy = false;
+            return;
+          }
+          var s = shot.getBoundingClientRect();
+          makeGhost(shot);
+          modal.hidden = false;
+          var f = frame.getBoundingClientRect();
+          frame.style.transition = "none";
+          frame.style.transform = "translate(" + (s.left - f.left) + "px," + (s.top - f.top) + "px) " +
+                                  "scale(" + s.width / f.width + "," + s.height / f.height + ")";
+          frame.getBoundingClientRect(); // flush layout so the start state paints
+          shot.style.visibility = "hidden";
+          requestAnimationFrame(function () {
+            modal.classList.add("show", "img-in");
+            frame.style.transition = "transform 1s cubic-bezier(0.2, 0.8, 0.2, 1)";
+            frame.style.transform = "none";
+          });
+          closeBtn.focus();
+          setTimeout(function () { removeGhost(); busy = false; }, 1050);
+        }
+
+        // Make sure the screenshot is decoded before measuring the frame,
+        // so the modal's final size is known up front.
+        if (img.decode) { img.decode().then(begin, begin); } else { begin(); }
+      }
+
+      var lastFocus = null;
+      function closeModal() {
+        if (busy || modal.hidden) return;
+        busy = true;
+        if (reduceMotion.matches || !activeShot) {
+          finish();
+          return;
+        }
+        var s = activeShot.getBoundingClientRect();
+        var f = frame.getBoundingClientRect();
+        makeGhost(activeShot);
+        ghost.getBoundingClientRect(); // paint ghost at opacity 0 (img-in) first
+        modal.classList.remove("show", "img-in");
+        frame.style.transition = "transform 0.9s cubic-bezier(0.4, 0, 0.2, 1)";
+        frame.style.transform = "translate(" + (s.left - f.left) + "px," + (s.top - f.top) + "px) " +
+                                "scale(" + s.width / f.width + "," + s.height / f.height + ")";
+        setTimeout(finish, 920);
+      }
+      function finish() {
+        modal.hidden = true;
+        modal.classList.remove("show", "img-in");
+        frame.style.transition = "";
+        frame.style.transform = "";
+        removeGhost();
+        if (activeShot) { activeShot.style.visibility = ""; }
+        document.body.style.overflow = "";
+        if (lastFocus) lastFocus.focus();
+        busy = false;
+      }
+
+      document.querySelectorAll(".shot[data-shot]").forEach(function (shot) {
+        shot.addEventListener("click", function () { openModal(shot); });
+      });
+      modal.addEventListener("click", function (e) {
+        if (e.target.closest(".modal-close") || !e.target.closest(".modal-frame")) closeModal();
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && !modal.hidden) closeModal();
       });
     })();
   </script>
