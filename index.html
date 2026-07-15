@@ -56,7 +56,38 @@
     .nav-links a:hover { color: var(--accent); text-decoration: none; }
 
     /* ---------- Hero ---------- */
+    .hero-wrap {
+      position: relative;
+      overflow: hidden;
+    }
+    /* Sunrise easter egg: a slow warm-to-daylight glow behind the hero,
+       a nod to the light-automation project. Two layers crossfade:
+       warm dawn (::before) gives way to cool daylight (::after). */
+    .hero-wrap::before,
+    .hero-wrap::after {
+      content: "";
+      position: absolute;
+      inset: auto -20% -55% -20%;
+      height: 120%;
+      pointer-events: none;
+    }
+    .hero-wrap::before {
+      background: radial-gradient(ellipse 70% 62% at 50% 100%, #ffa64d 0%, #ffd9a8 48%, transparent 78%);
+      opacity: 0.55;
+      animation: sunriseWarm 16s ease-in-out infinite alternate;
+    }
+    .hero-wrap::after {
+      background: radial-gradient(ellipse 72% 65% at 50% 100%, #9ecfff 0%, #dceeff 48%, transparent 78%);
+      opacity: 0;
+      animation: sunriseCool 16s ease-in-out infinite alternate;
+    }
+    @keyframes sunriseWarm { from { opacity: 0.55; } to { opacity: 0; } }
+    @keyframes sunriseCool { from { opacity: 0; }    to { opacity: 0.6; } }
+    @media (prefers-reduced-motion: reduce) {
+      .hero-wrap::before, .hero-wrap::after { animation: none; }
+    }
     .hero {
+      position: relative;
       text-align: center;
       padding: 96px 22px 80px;
       max-width: 780px;
@@ -245,6 +276,98 @@
       color: #86868b;
     }
 
+    /* ---------- Scroll reveal ---------- */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s cubic-bezier(0.25, 0.1, 0.25, 1),
+                  transform 0.7s cubic-bezier(0.25, 0.1, 0.25, 1);
+    }
+    .reveal.in-view {
+      opacity: 1;
+      transform: none;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1; transform: none; transition: none; }
+    }
+
+    /* ---------- Project screenshots ---------- */
+    .shot {
+      position: relative;
+      margin-top: 36px;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    }
+    .tile-light .shot { box-shadow: 0 24px 60px rgba(0, 0, 0, 0.14); }
+    .shot .titlebar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 36px;
+      padding: 0 14px;
+      background: #2a2a2e;
+    }
+    .tile-light .shot .titlebar { background: #e8e8ed; }
+    .shot .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .shot .dot:nth-child(1) { background: #ff5f57; }
+    .shot .dot:nth-child(2) { background: #febc2e; }
+    .shot .dot:nth-child(3) { background: #28c840; }
+    .shot .addr {
+      flex: 1;
+      text-align: center;
+      font-size: 12px;
+      color: #98989d;
+      font-weight: 500;
+    }
+    .tile-light .shot .addr { color: #6e6e73; }
+    .shot .details-chip {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 100px;
+      border: none;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.14);
+      color: #f5f5f7;
+      font-family: inherit;
+    }
+    .tile-light .shot .details-chip { background: rgba(0, 0, 0, 0.08); color: var(--text); }
+    .shot img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .shot .overlay {
+      position: absolute;
+      inset: 36px 0 0 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 36px 40px;
+      overflow-y: auto;
+      background: rgba(18, 18, 20, 0.82);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      pointer-events: none;
+    }
+    .shot:hover .overlay,
+    .shot.open .overlay {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .shot .overlay ul { margin-top: 0; }
+    .shot .overlay li { color: #d2d2d7; }
+    .shot .overlay .tag { background: rgba(255, 255, 255, 0.14); color: #f5f5f7; }
+    @media (prefers-reduced-motion: reduce) {
+      .shot .overlay { transition: none; }
+    }
+    @media (max-width: 640px) {
+      .shot .overlay { padding: 22px; justify-content: flex-start; }
+    }
+
     @media (max-width: 640px) {
       .tile { padding: 40px 28px; }
       .job { grid-template-columns: 1fr; gap: 6px; }
@@ -266,6 +389,7 @@
     </div>
   </nav>
 
+  <div class="hero-wrap">
   <header class="hero">
     <img src="assets/ashwin.jpg" alt="Ashwin Malkani">
     <h1>Ashwin Malkani</h1>
@@ -280,6 +404,7 @@
       <a href="#experience">View experience</a>
     </div>
   </header>
+  </div>
 
   <section id="projects">
     <div class="section-inner">
@@ -287,7 +412,7 @@
       <h2>Things I've built.</h2>
       <p class="section-sub">Complete, deployed, and in daily use.</p>
 
-      <div class="tile tile-dark">
+      <div class="tile tile-dark reveal">
         <p class="kicker">Smart Home</p>
         <h3>Light Automation</h3>
         <p class="lede">
@@ -295,24 +420,34 @@
           app doesn't offer — lights fade from dim warm light to full-brightness cool
           white over a configurable window, blended into one continuous sunrise.
         </p>
-        <ul>
-          <li>Sunrise automation with per-minute stepped fades that blend seamlessly</li>
-          <li>Editable presets — save any bulb state as a named scene</li>
-          <li>Full manual control: power, brightness, warmth, and color per bulb or group</li>
-          <li>Persistent settings with atomic writes; API token never echoed to the browser</li>
-        </ul>
-        <div class="tags">
-          <span class="tag">Node.js</span>
-          <span class="tag">Express</span>
-          <span class="tag">LIFX Cloud API</span>
-          <span class="tag">node-cron</span>
-        </div>
         <div class="tile-links">
           <a href="https://github.com/AshwinMalkani/lightAutomation" target="_blank" rel="noopener">View on GitHub</a>
         </div>
+        <div class="shot">
+          <div class="titlebar">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <span class="addr">Bedroom Lights</span>
+            <button class="details-chip" type="button">Details</button>
+          </div>
+          <img src="assets/shot-light.png" alt="Light Automation dashboard: sunrise schedule, presets, and lamp controls" loading="lazy">
+          <div class="overlay">
+            <ul>
+              <li>Sunrise automation with per-minute stepped fades that blend seamlessly</li>
+              <li>Editable presets — save any bulb state as a named scene</li>
+              <li>Full manual control: power, brightness, warmth, and color per bulb or group</li>
+              <li>Persistent settings with atomic writes; API token never echoed to the browser</li>
+            </ul>
+            <div class="tags">
+              <span class="tag">Node.js</span>
+              <span class="tag">Express</span>
+              <span class="tag">LIFX Cloud API</span>
+              <span class="tag">node-cron</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="tile tile-light">
+      <div class="tile tile-light reveal">
         <p class="kicker">Finance</p>
         <h3>Rental Tracker</h3>
         <p class="lede">
@@ -320,21 +455,31 @@
           cash-flow dashboard, Schedule E tax summaries, and in-browser mortgage
           statement parsing.
         </p>
-        <ul>
-          <li>Monthly cash-flow charts with per-unit income splits</li>
-          <li>Mortgage statement PDF upload — principal, interest, and escrow parsed in the browser</li>
-          <li>Schedule E tax view with CSV export for the CPA</li>
-          <li>Serverless on Cloudflare Workers + D1, gated behind Google OAuth</li>
-        </ul>
-        <div class="tags">
-          <span class="tag">Cloudflare Workers</span>
-          <span class="tag">D1 / SQLite</span>
-          <span class="tag">Chart.js</span>
-          <span class="tag">pdf.js</span>
-          <span class="tag">Cloudflare Access</span>
-        </div>
         <div class="tile-links">
           <span class="muted">Live at rental.ashwinmalkani.dev — private, access-gated</span>
+        </div>
+        <div class="shot">
+          <div class="titlebar">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <span class="addr">Rental Tracker · demo data</span>
+            <button class="details-chip" type="button">Details</button>
+          </div>
+          <img src="assets/shot-rental.png" alt="Rental Tracker dashboard: cash-flow chart, expense breakdown, and unit income split (demo data)" loading="lazy">
+          <div class="overlay">
+            <ul>
+              <li>Monthly cash-flow charts with per-unit income splits</li>
+              <li>Mortgage statement PDF upload — principal, interest, and escrow parsed in the browser</li>
+              <li>Schedule E tax view with CSV export for the CPA</li>
+              <li>Serverless on Cloudflare Workers + D1, gated behind Google OAuth</li>
+            </ul>
+            <div class="tags">
+              <span class="tag">Cloudflare Workers</span>
+              <span class="tag">D1 / SQLite</span>
+              <span class="tag">Chart.js</span>
+              <span class="tag">pdf.js</span>
+              <span class="tag">Cloudflare Access</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -345,7 +490,7 @@
       <p class="eyebrow">Experience</p>
       <h2>Where I've worked.</h2>
 
-      <div class="job">
+      <div class="job reveal">
         <div class="when">Oct 2025 — Present</div>
         <div>
           <h3>Visa</h3>
@@ -360,7 +505,7 @@
         </div>
       </div>
 
-      <div class="job">
+      <div class="job reveal">
         <div class="when">Apr 2024 — Oct 2025</div>
         <div>
           <h3>Stanford University</h3>
@@ -375,7 +520,7 @@
         </div>
       </div>
 
-      <div class="job">
+      <div class="job reveal">
         <div class="when">Jun 2023 — Sep 2023</div>
         <div>
           <h3>Visa</h3>
@@ -388,7 +533,7 @@
         </div>
       </div>
 
-      <div class="job">
+      <div class="job reveal">
         <div class="when">Jun 2022 — Sep 2022</div>
         <div>
           <h3>i2Chain Inc</h3>
@@ -408,18 +553,18 @@
       <p class="eyebrow">Education</p>
       <h2>Where I've studied.</h2>
       <div class="card-row">
-        <div class="card">
+        <div class="card reveal">
           <h3>University of Southern California</h3>
           <p class="sub">M.S. Computer Science · Jan 2025 — Dec 2026 · 4.0 GPA</p>
-          <p>Information Retrieval, Web Technologies, Natural Language Processing, Databases.</p>
+          <p>Information Retrieval, Web Technologies, Natural Language Processing, Machine Learning, Databases.</p>
         </div>
-        <div class="card">
+        <div class="card reveal">
           <h3>UC Santa Cruz</h3>
           <p class="sub">B.S. Computer Science · Jun 2020 — Mar 2024</p>
           <p>Computer Architecture, Algorithms, Operating Systems, Networking, Compilers, Parallel Programming, Full-Stack Development.</p>
         </div>
       </div>
-      <div class="skills">
+      <div class="skills reveal">
         <h3>Skills</h3>
         <div class="tags">
           <span class="tag" style="background:#fff; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">C++</span>
@@ -449,5 +594,30 @@
     <p class="fine-print">© 2026 Ashwin Malkani · ashwinmalkani.dev</p>
   </footer>
 
+  <script>
+    (function () {
+      if (!("IntersectionObserver" in window)) return;
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("in-view");
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
+      document.querySelectorAll(".reveal").forEach(function (el) { io.observe(el); });
+    })();
+
+    // Screenshot detail overlays: hover shows them on desktop; the Details
+    // chip (or a tap anywhere on the shot) toggles them on touch devices.
+    (function () {
+      document.querySelectorAll(".shot").forEach(function (shot) {
+        shot.addEventListener("click", function (e) {
+          if (e.target.closest("a")) return;
+          shot.classList.toggle("open");
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
